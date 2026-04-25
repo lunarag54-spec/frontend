@@ -3,37 +3,63 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import type { Product } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
-import { useToast } from '../../context/ToastContext';
+import { useToast } from '../../hooks/useToast';
 import { getErrorMessage } from '../../utils/errors';
 import LoadingSpinner from '../../Components/LoadingSpinner';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
+  const hasValidId = Boolean(id);
   const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(hasValidId);
   const [error, setError] = useState<string | null>(null);
   const { isAuthenticated } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
+  const [isAddingFavorite, setIsAddingFavorite] = useState(false);
 
   useEffect(() => {
+    const controller = new AbortController();
+
     const fetchProduct = async () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await api.get(`/api/products/${id}`);
+        const response = await api.get<Product>(`/api/products/${id}`, { signal: controller.signal });
         setProduct(response.data);
       } catch (error) {
+        if (controller.signal.aborted) return;
         const message = getErrorMessage(error, 'No se pudo cargar el producto');
         setError(message);
         showToast(message, 'error');
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
     };
 
-    if (id) fetchProduct();
+    if (id) {
+      void fetchProduct();
+    }
+
+    return () => {
+      controller.abort();
+    };
   }, [id, showToast]);
+
+  const handleAddToFavorites = async () => {
+    if (!product || isAddingFavorite) return;
+    try {
+      setIsAddingFavorite(true);
+      await api.post(`/api/favorites/${product.id}`);
+      showToast('Producto anadido a favoritos', 'success');
+    } catch (error) {
+      showToast(getErrorMessage(error, 'No se pudo anadir a favoritos'), 'error');
+    } finally {
+      setIsAddingFavorite(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -45,11 +71,11 @@ const ProductDetail = () => {
     );
   }
 
-  if (error || !product) {
+  if (!hasValidId || error || !product) {
     return (
       <div className="min-h-[calc(100vh-72px)] bg-light dark:bg-gray-900">
         <div className="flex flex-col items-center justify-center h-[70vh] text-center px-6">
-          <p className="text-red-500 text-xl mb-6">{error || 'Producto no encontrado'}</p>
+          <p className="text-red-500 text-xl mb-6">{error ?? 'Producto no encontrado'}</p>
           <button
             type="button"
             onClick={() => navigate('/products')}
@@ -118,9 +144,11 @@ const ProductDetail = () => {
 
             <button
               type="button"
+              onClick={handleAddToFavorites}
+              disabled={!isAuthenticated || isAddingFavorite}
               className="w-full border-2 border-gray-300 hover:border-gray-400 py-5 rounded-3xl text-xl font-medium transition focus:outline-none focus:ring-4 focus:ring-gray-200"
             >
-              ❤️ Añadir a favoritos
+              {isAddingFavorite ? 'Anadiendo...' : '❤️ Anadir a favoritos'}
             </button>
           </div>
         </div>

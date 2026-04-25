@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_URL = String(import.meta.env.VITE_API_URL ?? 'http://localhost:8081').trim();
+const DEFAULT_API_URL = 'http://localhost:8081';
+const API_URL = String(import.meta.env.VITE_API_URL ?? DEFAULT_API_URL).trim() || DEFAULT_API_URL;
 
 const api = axios.create({
   baseURL: API_URL,
@@ -12,7 +13,7 @@ const api = axios.create({
 
 // Interceptor para añadir el token JWT automáticamente
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('token')?.trim();
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -28,11 +29,13 @@ api.interceptors.response.use(
       (error instanceof Error ? error.message : null) ||
       'Error desconocido en el servidor';
 
-    console.error('[API Error]', {
-      url: axios.isAxiosError(error) ? error.config?.url : undefined,
-      status: axios.isAxiosError(error) ? error.response?.status : undefined,
-      message: errorMessage,
-    });
+    if (import.meta.env.DEV) {
+      console.error('[API Error]', {
+        url: axios.isAxiosError(error) ? error.config?.url : undefined,
+        status: axios.isAxiosError(error) ? error.response?.status : undefined,
+        message: errorMessage,
+      });
+    }
 
     return Promise.reject(error);
   }

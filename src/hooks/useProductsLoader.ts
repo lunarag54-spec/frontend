@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 import api from '../services/api';
-import { useToast } from '../context/ToastContext';
+import { useToast } from './useToast';
 import { getErrorMessage } from '../utils/errors';
 import type { Product } from '../types';
 
@@ -20,6 +20,7 @@ export const useProductsLoader = (endpoint: string, fallbackMessage: string) => 
         if (axios.isAxiosError(error) && error.code === 'ERR_CANCELED') {
           return;
         }
+        setProducts([]);
         showToast(getErrorMessage(error, fallbackMessage), 'error');
       } finally {
         setLoading(false);
@@ -30,6 +31,7 @@ export const useProductsLoader = (endpoint: string, fallbackMessage: string) => 
 
   useEffect(() => {
     const controller = new AbortController();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void fetchProducts(controller.signal);
 
     return () => {

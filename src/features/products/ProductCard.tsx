@@ -1,15 +1,16 @@
 import { Link } from 'react-router-dom';
+import type { MouseEvent } from 'react';
 import type { Product } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 import api from '../../services/api';
-import { useToast } from '../../context/ToastContext';
+import { useToast } from '../../hooks/useToast';
 import { getErrorMessage } from '../../utils/errors';
 
 const ProductCard = ({ product }: { product: Product }) => {
   const { isAuthenticated } = useAuth();
   const { showToast } = useToast();
 
-  const addToFavorites = async (e: React.MouseEvent) => {
+  const addToFavorites = async (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
     try {
@@ -50,7 +51,7 @@ const ProductCard = ({ product }: { product: Product }) => {
               {product.title}
             </h3>
             <span className="text-primary font-bold text-2xl ml-4">
-              {product.price.toFixed(2)} €
+              {Number(product.price).toFixed(2)} €
             </span>
           </div>
           

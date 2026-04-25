@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useContext } from 'react';
 import type { ReactNode } from 'react';
 import { AuthContext } from './auth';
 import type { User } from './auth';
@@ -16,8 +16,16 @@ const getStoredUser = (): User | null => {
   }
 };
 
+const getStoredToken = (): string | null => {
+  const rawToken = localStorage.getItem('token');
+  if (!rawToken) return null;
+
+  const token = rawToken.trim();
+  return token.length > 0 ? token : null;
+};
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+  const [token, setToken] = useState<string | null>(getStoredToken);
   const [user, setUser] = useState<User | null>(getStoredUser);
 
   const login = (newToken: string, userData: User) => {
@@ -46,4 +54,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       {children}
     </AuthContext.Provider>
   );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };

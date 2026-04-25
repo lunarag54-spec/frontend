@@ -14,7 +14,7 @@ const Favorites = () => {
         <h1 className="mb-8 text-4xl font-bold text-dark dark:text-white">Mis Favoritos</h1>
 
         {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
             {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
           </div>
         ) : favorites.length === 0 ? (
@@ -26,7 +26,7 @@ const Favorites = () => {
             onAction={() => navigate('/products')}
           />
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
             {favorites.map(product => (
               <ProductCard key={product.id} product={product} />
             ))}

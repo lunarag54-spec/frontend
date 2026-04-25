@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../context/AuthContext';
 import { useState } from 'react';
+import logo from '../assets/logo.png';
 
 const Navbar = () => {
   const { user, logout, isAuthenticated } = useAuth();
@@ -18,9 +19,9 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-6 py-4">
         <div className="flex justify-between items-center">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 text-2xl font-bold">
-            <span className="text-primary">♻️</span>
-            <span>EcoSwap</span>
+          <Link to="/" className="flex items-center gap-3">
+            <img src={logo} alt="EcoSwap Logo" className="h-10 w-auto" />
+            <span className="text-2xl font-bold tracking-tight">EcoSwap</span>
           </Link>
 
           {/* Desktop Menu */}
@@ -34,12 +35,25 @@ const Navbar = () => {
             )}
           </div>
 
-          {/* User actions */}
+          {/* Acciones del usuario */}
           <div className="hidden md:flex items-center gap-4">
             {isAuthenticated ? (
               <>
                 <span className="text-sm text-gray-300">Hola, {user?.username}</span>
-                <button onClick={handleLogout} className="bg-red-600 hover:bg-red-700 px-5 py-2 rounded-xl text-sm transition">
+                
+                {/* Botón permanente para crear producto */}
+                <Link
+                  to="/create-product"
+                  className="bg-primary hover:bg-green-600 px-6 py-2.5 rounded-2xl text-sm font-semibold transition flex items-center gap-2"
+                >
+                  <span className="text-lg">＋</span>
+                  Publicar producto
+                </Link>
+
+                <button
+                  onClick={handleLogout}
+                  className="bg-red-600 hover:bg-red-700 px-5 py-2 rounded-xl text-sm transition"
+                >
                   Cerrar sesión
                 </button>
               </>
@@ -51,20 +65,10 @@ const Navbar = () => {
                 </Link>
               </>
             )}
-
-            <button
-              type="button"
-              onClick={() => document.documentElement.classList.toggle('dark')}
-              className="p-2 text-2xl hover:text-primary transition-all duration-300 hover:rotate-12"
-              aria-label="Cambiar modo oscuro"
-            >
-              🌙
-            </button>
           </div>
 
           {/* Mobile Hamburger */}
           <button
-            type="button"
             className="md:hidden text-3xl"
             onClick={() => setMenuOpen(!menuOpen)}
           >
@@ -76,14 +80,26 @@ const Navbar = () => {
         {menuOpen && (
           <div className="md:hidden mt-4 bg-dark border-t border-gray-700 py-4 flex flex-col gap-4">
             <Link to="/products" className="px-4 py-3 hover:bg-gray-700 rounded-xl" onClick={() => setMenuOpen(false)}>Catálogo</Link>
+            
             {isAuthenticated && (
               <>
                 <Link to="/my-products" className="px-4 py-3 hover:bg-gray-700 rounded-xl" onClick={() => setMenuOpen(false)}>Mis productos</Link>
                 <Link to="/favorites" className="px-4 py-3 hover:bg-gray-700 rounded-xl" onClick={() => setMenuOpen(false)}>Favoritos</Link>
+                
+                {/* Botón permanente en móvil */}
+                <Link
+                  to="/create-product"
+                  className="mx-4 bg-primary text-white py-3 text-center rounded-2xl font-semibold flex items-center justify-center gap-2"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <span className="text-xl">＋</span>
+                  Publicar producto
+                </Link>
               </>
             )}
+
             {isAuthenticated ? (
-              <button type="button" onClick={handleLogout} className="mx-4 bg-red-600 text-white py-3 rounded-xl">Cerrar sesión</button>
+              <button onClick={handleLogout} className="mx-4 bg-red-600 text-white py-3 rounded-xl">Cerrar sesión</button>
             ) : (
               <div className="flex flex-col gap-3 px-4">
                 <Link to="/login" className="py-3 text-center border border-gray-400 rounded-xl" onClick={() => setMenuOpen(false)}>Iniciar sesión</Link>

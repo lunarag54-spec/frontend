@@ -1,18 +1,5 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
-
-interface Toast {
-  id: number;
-  message: string;
-  type: 'success' | 'error' | 'info';
-}
-
-interface ToastContextType {
-  toasts: Toast[];
-  showToast: (message: string, type: 'success' | 'error' | 'info') => void;
-  removeToast: (id: number) => void;
-}
-
-const ToastContext = createContext<ToastContextType | undefined>(undefined);
+import { useCallback, useEffect, useRef, useState, useContext, type ReactNode } from 'react';
+import { ToastContext, type Toast } from './toast';
 
 export const ToastProvider = ({ children }: { children: ReactNode }) => {
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -40,9 +27,10 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
   }, [removeToast]);
 
   useEffect(() => {
+    const timers = timeoutRef.current;
     return () => {
-      timeoutRef.current.forEach((timeoutId) => window.clearTimeout(timeoutId));
-      timeoutRef.current.clear();
+      timers.forEach((timeoutId) => window.clearTimeout(timeoutId));
+      timers.clear();
     };
   }, []);
 
@@ -55,6 +43,8 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
 
 export const useToast = () => {
   const context = useContext(ToastContext);
-  if (!context) throw new Error('useToast must be used within ToastProvider');
+  if (!context) {
+    throw new Error('useToast must be used within a ToastProvider');
+  }
   return context;
 };

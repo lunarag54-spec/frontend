@@ -4,12 +4,12 @@ import { z } from 'zod';
 import { useAuth } from '../hooks/useAuth';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import { useToast } from '../context/ToastContext';
+import { useToast } from '../hooks/useToast';
 import { getErrorMessage } from '../utils/errors';
 
 const registerSchema = z.object({
-  username: z.string().min(3, 'El nombre de usuario debe tener al menos 3 caracteres'),
-  email: z.string().email('Correo electrónico inválido'),
+  username: z.string().trim().min(3, 'El nombre de usuario debe tener al menos 3 caracteres').max(40, 'El nombre de usuario es demasiado largo'),
+  email: z.string().trim().email('Correo electrónico inválido'),
   password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
 });
 
@@ -47,6 +47,7 @@ const Register = () => {
               placeholder="Nombre de usuario"
               className="w-full p-4 border border-gray-300 rounded-3xl focus:outline-none focus:border-primary focus:ring-4 focus:ring-green-100"
               aria-label="Nombre de usuario"
+              autoComplete="username"
             />
             {errors.username && <p className="text-red-500 text-sm mt-1" role="alert">{errors.username.message}</p>}
           </div>
@@ -58,6 +59,7 @@ const Register = () => {
               placeholder="Correo electrónico"
               className="w-full p-4 border border-gray-300 rounded-3xl focus:outline-none focus:border-primary focus:ring-4 focus:ring-green-100"
               aria-label="Correo electrónico"
+              autoComplete="email"
             />
             {errors.email && <p className="text-red-500 text-sm mt-1" role="alert">{errors.email.message}</p>}
           </div>
@@ -69,6 +71,7 @@ const Register = () => {
               placeholder="Contraseña"
               className="w-full p-4 border border-gray-300 rounded-3xl focus:outline-none focus:border-primary focus:ring-4 focus:ring-green-100"
               aria-label="Contraseña"
+              autoComplete="new-password"
             />
             {errors.password && <p className="text-red-500 text-sm mt-1" role="alert">{errors.password.message}</p>}
           </div>

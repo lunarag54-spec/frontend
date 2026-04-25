@@ -3,12 +3,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
-import { useToast } from '../../context/ToastContext';
+import { useToast } from '../../hooks/useToast';
 import { getErrorMessage } from '../../utils/errors';
 
 const createProductSchema = z.object({
-  title: z.string().min(3, 'El título debe tener al menos 3 caracteres'),
-  description: z.string().min(10, 'La descripción debe tener al menos 10 caracteres'),
+  title: z.string().trim().min(3, 'El título debe tener al menos 3 caracteres').max(120, 'El titulo es demasiado largo'),
+  description: z.string().trim().min(10, 'La descripción debe tener al menos 10 caracteres').max(2000, 'La descripcion es demasiado larga'),
   price: z.string().refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
     message: 'El precio debe ser un número mayor a 0'
   }),
@@ -31,8 +31,10 @@ const CreateProduct = () => {
     try {
       await api.post('/api/products', {
         ...data,
+        title: data.title.trim(),
+        description: data.description.trim(),
         price: Number.parseFloat(data.price),
-        imageUrl: data.imageUrl || undefined,
+        imageUrl: data.imageUrl?.trim() || undefined,
       });
       showToast('¡Producto publicado con éxito!', 'success');
       navigate('/my-products');
@@ -58,6 +60,7 @@ const CreateProduct = () => {
               className="w-full p-4 border border-gray-300 rounded-3xl focus:outline-none focus:border-primary focus:ring-4 focus:ring-green-100"
               placeholder="Ej: PS5 Slim edición God of War"
               aria-label="Título del producto"
+              autoComplete="off"
             />
             {errors.title && <p className="text-red-500 text-sm mt-1" role="alert">{errors.title.message}</p>}
           </div>
@@ -70,6 +73,7 @@ const CreateProduct = () => {
               className="w-full p-4 border border-gray-300 rounded-3xl focus:outline-none focus:border-primary focus:ring-4 focus:ring-green-100"
               placeholder="Describe el producto con detalle..."
               aria-label="Descripción del producto"
+              maxLength={2000}
             />
             {errors.description && <p className="text-red-500 text-sm mt-1" role="alert">{errors.description.message}</p>}
           </div>
@@ -81,6 +85,7 @@ const CreateProduct = () => {
                 {...register('price')}
                 type="number"
                 step="0.01"
+                min="0"
                 className="w-full p-4 border border-gray-300 rounded-3xl focus:outline-none focus:border-primary focus:ring-4 focus:ring-green-100"
                 aria-label="Precio del producto"
               />

@@ -4,11 +4,11 @@ import { z } from 'zod';
 import { useAuth } from '../hooks/useAuth';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import api from '../services/api';
-import { useToast } from '../context/ToastContext';
+import { useToast } from '../hooks/useToast';
 import { getErrorMessage } from '../utils/errors';
 
 const loginSchema = z.object({
-  username: z.string().min(1, 'El nombre de usuario es obligatorio'),
+  username: z.string().trim().min(1, 'El nombre de usuario es obligatorio'),
   password: z.string().min(1, 'La contraseña es obligatoria'),
 });
 
@@ -49,6 +49,7 @@ const Login = () => {
               placeholder="Nombre de usuario"
               className="w-full p-4 border border-gray-300 rounded-3xl focus:outline-none focus:border-primary focus:ring-4 focus:ring-green-100"
               aria-label="Nombre de usuario"
+              autoComplete="username"
             />
             {errors.username && <p className="text-red-500 text-sm mt-1" role="alert">{errors.username.message}</p>}
           </div>
@@ -60,6 +61,7 @@ const Login = () => {
               placeholder="Contraseña"
               className="w-full p-4 border border-gray-300 rounded-3xl focus:outline-none focus:border-primary focus:ring-4 focus:ring-green-100"
               aria-label="Contraseña"
+              autoComplete="current-password"
             />
             {errors.password && <p className="text-red-500 text-sm mt-1" role="alert">{errors.password.message}</p>}
           </div>
