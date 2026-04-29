@@ -16,7 +16,6 @@ const PedidoFinalizado = () => {
         <div className="text-8xl mb-8">🎉</div>
         <h1 className="text-5xl font-bold text-dark mb-4">¡Pedido realizado con éxito!</h1>
         <p className="text-xl text-gray-600 mb-12">
-          Los productos han sido eliminados de la base de datos.<br />
           Gracias por tu compra en EcoSwap.
         </p>
         
