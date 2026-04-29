@@ -1,10 +1,12 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../hooks/useCart';
 import { useState } from 'react';
 import logo from '../assets/logo.png';
 
 const Navbar = () => {
   const { user, logout, isAuthenticated } = useAuth();
+  const { getTotalItems } = useCart();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -40,8 +42,21 @@ const Navbar = () => {
             {isAuthenticated ? (
               <>
                 <span className="text-sm text-gray-300">Hola, {user?.username}</span>
-                
-                {/* Botón permanente para crear producto */}
+
+                {/* Botón Carrito */}
+                <Link
+                  to="/cart"
+                  className="relative flex items-center gap-2 bg-gray-700 hover:bg-gray-600 px-5 py-2.5 rounded-2xl transition"
+                >
+                  🛒
+                  {getTotalItems() > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-primary text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full">
+                      {getTotalItems()}
+                    </span>
+                  )}
+                </Link>
+
+                {/* Botón Publicar producto */}
                 <Link
                   to="/create-product"
                   className="bg-primary hover:bg-green-600 px-6 py-2.5 rounded-2xl text-sm font-semibold transition flex items-center gap-2"
@@ -80,24 +95,14 @@ const Navbar = () => {
         {menuOpen && (
           <div className="md:hidden mt-4 bg-dark border-t border-gray-700 py-4 flex flex-col gap-4">
             <Link to="/products" className="px-4 py-3 hover:bg-gray-700 rounded-xl" onClick={() => setMenuOpen(false)}>Catálogo</Link>
-            
             {isAuthenticated && (
               <>
                 <Link to="/my-products" className="px-4 py-3 hover:bg-gray-700 rounded-xl" onClick={() => setMenuOpen(false)}>Mis productos</Link>
                 <Link to="/favorites" className="px-4 py-3 hover:bg-gray-700 rounded-xl" onClick={() => setMenuOpen(false)}>Favoritos</Link>
-                
-                {/* Botón permanente en móvil */}
-                <Link
-                  to="/create-product"
-                  className="mx-4 bg-primary text-white py-3 text-center rounded-2xl font-semibold flex items-center justify-center gap-2"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  <span className="text-xl">＋</span>
-                  Publicar producto
-                </Link>
+                <Link to="/cart" className="px-4 py-3 hover:bg-gray-700 rounded-xl" onClick={() => setMenuOpen(false)}>🛒 Carrito ({getTotalItems()})</Link>
+                <Link to="/create-product" className="mx-4 bg-primary text-white py-3 text-center rounded-2xl font-semibold" onClick={() => setMenuOpen(false)}>Publicar producto</Link>
               </>
             )}
-
             {isAuthenticated ? (
               <button onClick={handleLogout} className="mx-4 bg-red-600 text-white py-3 rounded-xl">Cerrar sesión</button>
             ) : (

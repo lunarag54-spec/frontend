@@ -2,154 +2,108 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import type { Product } from '../../types';
-import { useAuth } from '../../hooks/useAuth';
-import { useToast } from '../../hooks/useToast';
-import { getErrorMessage } from '../../utils/errors';
-import LoadingSpinner from '../../Components/LoadingSpinner';
+import { useAuth } from '../../context/AuthContext';
+import { useCart } from '../../hooks/useCart';
+import { useToast } from '../../context/ToastContext';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const hasValidId = Boolean(id);
   const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(hasValidId);
-  const [error, setError] = useState<string | null>(null);
-  const { isAuthenticated } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const { addToCart } = useCart();
   const { showToast } = useToast();
   const navigate = useNavigate();
-  const [isAddingFavorite, setIsAddingFavorite] = useState(false);
 
   useEffect(() => {
-    const controller = new AbortController();
-
     const fetchProduct = async () => {
       try {
         setLoading(true);
-        setError(null);
-        const response = await api.get<Product>(`/api/products/${id}`, { signal: controller.signal });
+        const response = await api.get(`/api/products/${id}`);
         setProduct(response.data);
       } catch (error) {
-        if (controller.signal.aborted) return;
-        const message = getErrorMessage(error, 'No se pudo cargar el producto');
-        setError(message);
-        showToast(message, 'error');
+        console.error(error);
       } finally {
-        if (!controller.signal.aborted) {
-          setLoading(false);
-        }
+        setLoading(false);
       }
     };
 
-    if (id) {
-      void fetchProduct();
-    }
+    if (id) fetchProduct();
+  }, [id]);
 
-    return () => {
-      controller.abort();
-    };
-  }, [id, showToast]);
+  const isOwner = user?.username === product?.username;
 
-  const handleAddToFavorites = async () => {
-    if (!product || isAddingFavorite) return;
+  const handleDelete = async () => {
+    if (!window.confirm('¿Estás seguro de que quieres eliminar este producto?')) return;
+
     try {
-      setIsAddingFavorite(true);
-      await api.post(`/api/favorites/${product.id}`);
-      showToast('Producto anadido a favoritos', 'success');
-    } catch (error) {
-      showToast(getErrorMessage(error, 'No se pudo anadir a favoritos'), 'error');
-    } finally {
-      setIsAddingFavorite(false);
+      await api.delete(`/api/products/${id}`);
+      showToast('Producto eliminado correctamente', 'success');
+      navigate('/my-products');
+    } catch {
+      showToast('Error al eliminar el producto', 'error');
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-[calc(100vh-72px)] bg-light dark:bg-gray-900">
-        <div className="flex items-center justify-center h-[70vh]">
-          <LoadingSpinner />
-        </div>
-      </div>
-    );
-  }
+  const handleAddToCart = () => {
+    if (product) {
+      addToCart(product);
+      showToast('Producto añadido al carrito', 'success');
+    }
+  };
 
-  if (!hasValidId || error || !product) {
-    return (
-      <div className="min-h-[calc(100vh-72px)] bg-light dark:bg-gray-900">
-        <div className="flex flex-col items-center justify-center h-[70vh] text-center px-6">
-          <p className="text-red-500 text-xl mb-6">{error ?? 'Producto no encontrado'}</p>
-          <button
-            type="button"
-            onClick={() => navigate('/products')}
-            className="bg-primary text-white px-8 py-4 rounded-3xl hover:bg-green-600 transition"
-          >
-            Volver al catálogo
-          </button>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-light">Cargando...</div>;
+  if (!product) return <div className="min-h-screen flex items-center justify-center bg-light">Producto no encontrado</div>;
 
   return (
-    <div className="min-h-[calc(100vh-72px)] bg-light dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="mb-6 flex items-center gap-2 text-primary hover:underline font-medium focus:outline-none focus:ring-2 focus:ring-primary rounded-xl px-4 py-2"
-          aria-label="Volver al catálogo"
-        >
+    <div className="min-h-screen bg-light">
+      <div className="max-w-6xl mx-auto px-6 py-10">
+        <button onClick={() => navigate(-1)} className="mb-8 flex items-center gap-2 text-primary hover:underline font-medium">
           ← Volver
         </button>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-          {/* Imagen */}
-          <div className="aspect-square bg-white rounded-3xl overflow-hidden shadow-xl">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          <div>
             <img 
-              src={product.imageUrl || 'https://via.placeholder.com/800x800?text=Sin+imagen'} 
+              src={product.imageUrl || 'https://picsum.photos/id/1015/600/600'} 
               alt={product.title}
-              className="w-full h-full object-cover"
+              className="w-full rounded-3xl shadow-xl"
             />
           </div>
 
-          {/* Información */}
           <div>
-            <h1 className="text-4xl font-bold text-dark leading-tight">{product.title}</h1>
-            <p className="text-4xl font-semibold text-primary mt-4">
-              {product.price.toFixed(2)} €
-            </p>
-
-            <div className="flex flex-wrap gap-3 mt-6">
-              <span className="px-5 py-2 bg-gray-100 rounded-3xl text-sm font-medium">{product.category}</span>
-              <span className="px-5 py-2 bg-gray-100 rounded-3xl text-sm font-medium">{product.condition}</span>
+            <h1 className="text-4xl font-bold text-dark">{product.title}</h1>
+            <p className="text-3xl font-semibold text-primary mt-3">{product.price.toFixed(2)} €</p>
+            
+            <div className="flex gap-3 mt-6">
+              <span className="px-5 py-2 bg-gray-100 rounded-3xl text-sm">{product.category}</span>
+              <span className="px-5 py-2 bg-gray-100 rounded-3xl text-sm">{product.condition}</span>
             </div>
 
-            <p className="mt-8 text-gray-500">
-              Publicado por <span className="font-semibold text-dark">{product.username}</span>
-            </p>
+            <p className="mt-8">Publicado por <span className="font-semibold">{product.username}</span></p>
 
             <div className="my-10 border-t border-b py-8">
-              <h2 className="font-semibold mb-4 text-lg">Descripción</h2>
-              <p className="text-gray-600 leading-relaxed whitespace-pre-line">
-                {product.description}
-              </p>
+              <h3 className="font-semibold mb-4">Descripción</h3>
+              <p className="text-gray-600 leading-relaxed">{product.description}</p>
             </div>
 
-            {isAuthenticated && (
+            <div className="space-y-4">
               <button
-                type="button"
-                className="w-full bg-primary hover:bg-green-600 text-white py-5 rounded-3xl text-xl font-semibold transition focus:outline-none focus:ring-4 focus:ring-green-300 mb-4"
+                onClick={handleAddToCart}
+                className="w-full bg-primary hover:bg-green-600 text-white py-5 rounded-3xl text-xl font-semibold transition"
               >
-                Contactar con el vendedor
+                🛒 Añadir al carrito
               </button>
-            )}
 
-            <button
-              type="button"
-              onClick={handleAddToFavorites}
-              disabled={!isAuthenticated || isAddingFavorite}
-              className="w-full border-2 border-gray-300 hover:border-gray-400 py-5 rounded-3xl text-xl font-medium transition focus:outline-none focus:ring-4 focus:ring-gray-200"
-            >
-              {isAddingFavorite ? 'Anadiendo...' : '❤️ Anadir a favoritos'}
-            </button>
+              {isOwner && (
+                <button
+                  onClick={handleDelete}
+                  className="w-full bg-red-600 hover:bg-red-700 text-white py-5 rounded-3xl text-xl font-semibold transition"
+                >
+                  🗑 Eliminar producto
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
